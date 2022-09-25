@@ -1,6 +1,7 @@
 # directories
 /.idea
 /node_modules/
+/dist/
 
 #files
 .env
