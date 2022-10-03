@@ -1,16 +1,17 @@
 import express, {Request, Response} from 'express'
-import {requiresAuth} from "express-openid-connect";
 
-const router = express.Router();
+const Router = require('express-promise-router')
 
-router.get('/', (req: Request,res:Response):Response => {
-    return res.status(200).send({
-        message: "This is the non protected profile page"
+const router = new Router();
+
+router.get('/', (req: Request, res: Response): Response => {
+    return res.status(200).json({
+        message: "This is the default profile page"
     })
 })
 
-router.get('/test', requiresAuth() ,(req: Request,res:Response):Response => {
-    return res.status(200).send(JSON.stringify(req.oidc.user))
+router.get('/:profileId', (req: Request, res: Response): Response => {
+    return res.status(200).json({message: `this is the endpoint for profile with id: ${req.params.profileId}`})
 })
 
 module.exports = router;

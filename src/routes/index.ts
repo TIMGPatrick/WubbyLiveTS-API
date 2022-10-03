@@ -1,21 +1,15 @@
-import express, {Request, Response } from 'express';
-import {auth} from 'express-openid-connect';
+import express, {Request, Response} from 'express';
+const Router = require('express-promise-router')
 
-const router = express.Router();
+const router = new Router();
 
 router.get(
     "/", (req: Request, res: Response) => {
-        res.status(200).send({
+        res.status(200).json({
             message: "Hello World!",
         });
     }
 );
-
-router.get("/callback", (req:any,res) => {
-    res.status(200).send({
-        message: req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out'
-    })
-})
 
 module.exports = router;
 
