@@ -1,15 +1,29 @@
 const { Pool } = require('pg')
-const pool = new Pool()
+
+let credentials = {
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DATABASE,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
+};
+
+
+const pool = new Pool(credentials)
 module.exports = {
     async query(text: string, params: any[]): Promise<any> {
         const start = Date.now()
-        const res = await pool.query(text, params)
+        const client = await pool.connect()
+        const res = await client.query(text, params)
         const duration = Date.now() - start
-        console.log('executed query', { text, duration, rows: res.rowCount })
-        return res
+        console.log('executed query', { text, duration, rows: res.rowCount, row_data: res.rows })
+        // console.log(`row information ${res.rows[0].id}`)
+        client.release();
+        return res.rowCount == 1 ? res.rows[0] : res.rows;
+        // return res
     },
     async getClient() {
-        const client = await pool.connect()
+        const client = await pool.connect(credentials)
         const query = client.query
         const release = client.release
         // set a timeout of 5 seconds, after which we will log this client's last query
