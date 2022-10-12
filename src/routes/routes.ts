@@ -5,7 +5,7 @@ const cors = require('cors')
 const indexRouter = require("../routes/index");
 const authRouter = require("../routes/auth");
 const profileRouter = require("../routes/profile");
-const videoRouter = require("../routes/videos")
+const videoRouter = require("./video")
 
 module.exports = function (app: Application) {
     // app.use()

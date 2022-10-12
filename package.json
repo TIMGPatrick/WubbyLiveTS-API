@@ -18,6 +18,7 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.186.0",
     "cors": "^2.8.5",
     "db-migrate-pg": "^1.2.2",
     "dotenv": "^16.0.2",
