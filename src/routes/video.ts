@@ -51,7 +51,7 @@ router.get('/list-spaces', async (req: Request, res: Response) => {
     }
 })
 
-router.get('/get-signed-url', async (req: Request, res: Response) => {
+router.post('/get-signed-url', async (req: Request, res: Response) => {
     // const data = await s3Client.send(new )
 })
 
