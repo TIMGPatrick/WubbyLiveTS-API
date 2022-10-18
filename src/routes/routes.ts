@@ -1,4 +1,4 @@
-import {Application} from "express";
+import express, {Application} from "express";
 const cors = require('cors')
 
 
@@ -8,7 +8,7 @@ const profileRouter = require("../routes/profile");
 const videoRouter = require("./video")
 
 module.exports = function (app: Application) {
-    // app.use()
+    app.use(express.json());
     app.use(cors());
 
     app.use("/api/v1", indexRouter);
