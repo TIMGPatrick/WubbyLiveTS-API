@@ -7,6 +7,7 @@ import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import {PutObjectCommand} from "@aws-sdk/client-s3";
 import {logger} from "../tools/logger";
 
+const pino = require('pino-http')();
 const {DateTime} = require("luxon");
 
 const Router = require('express-promise-router')
@@ -15,6 +16,7 @@ const db = require('../db')
 const router = new Router();
 
 router.get('/', (req: Request, res: Response) => {
+    logger.info("HTTP Request: ", pino(req,res))
     res.status(200).json({
         message: "This is the videos default endpoint"
     });
@@ -28,9 +30,10 @@ router.get('/:videoId', async (req: Request, res: Response) => {
         firstname: "patrick",
         lastname: "mcpherson"
     }
-    logger.info('Video is null: ', {video})
-
-    logger.info("video returned: ", obj);
+    if (Object.keys(video).length == 0)
+    {
+        logger.info({video}, 'Video is null')
+    }
 
     res.status(200).json({
         video

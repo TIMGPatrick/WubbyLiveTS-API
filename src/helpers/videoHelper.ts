@@ -2,6 +2,7 @@
 import {PutObjectCommand} from "@aws-sdk/client-s3";
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import {s3Client} from "../tools/s3Client";
+import {logger} from "../tools/logger";
 
 // Generates the URL.
 async function GenerateSignedUrl(fileName: string, fileType: string): Promise<string | undefined> {
