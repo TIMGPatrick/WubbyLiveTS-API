@@ -14,10 +14,10 @@ async function GenerateSignedUrl(fileName: string, fileType: string): Promise<st
     };
     try {
         const url = await getSignedUrl(s3Client, new PutObjectCommand(spaceParams), {expiresIn: 15 * 60}); // Adjustable expiration.
-        console.log("URL:", url);
+        logger.info("URL:", url);
         return url;
     } catch (err) {
-        console.log("Error", err);
+        logger.info("Error", err);
     }
 }
 

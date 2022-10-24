@@ -1,4 +1,5 @@
 import express, { Application, Response, Request } from "express";
+import {logger} from "./tools/logger";
 const cors = require('cors')
 
 const app: Application = express();
@@ -12,8 +13,8 @@ app.use(cors());
 
 try {
     app.listen(port, (): void => {
-        console.log(`Connected successfully on port ${port}`);
+        logger.info(`Connected successfully on port ${port}`);
     });
 } catch (error: any) {
-    console.error(`Error occurred: ${error.message}`);
+    logger.error(`Error occurred: ${error.message}`);
 }
