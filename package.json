@@ -28,6 +28,7 @@
     "express-jwt": "^7.7.5",
     "express-promise-router": "^4.1.1",
     "jwks-rsa": "^2.1.4",
+    "lodash": "^4.17.21",
     "luxon": "^3.0.4",
     "pg": "^8.8.0",
     "pg-cursor": "^2.7.4",

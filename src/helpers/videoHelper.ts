@@ -8,7 +8,7 @@ import {logger} from "../tools/logger";
 async function GenerateSignedUrl(fileName: string, fileType: string): Promise<string | undefined> {
     // Specifies path, file, and content type.
     let spaceParams = {
-        Bucket: "voddle-galaxy",
+        Bucket: process.env.DO_BUCKET,
         Key: fileName,
         ContentType: fileType,
         ACL: 'public-read'
