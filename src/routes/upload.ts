@@ -128,20 +128,18 @@ router.post('/getMultipartPreSignedUrls', async (req: Request, res: Response) =>
         ContentType: "video/mp4"
     }
     const promises = []
-    let signedUrls:any = [];
+    let signedUrls: any = [];
     for (let index = 0; index < parts; index++) {
-        // promises.push(
-            multipartParams.PartNumber = index + 1
+        multipartParams.PartNumber = index + 1
         {
             signedUrls.push(await getSignedUrl(s3Client, new PutObjectCommand(multipartParams)))
         }
-        // )
     }
     // const signedUrls = await Promise.all(promises)
     console.log("Signed Urls: ")
 
     // each url is assigned a part to the index
-    const partSignedUrlList = signedUrls.map((signedUrl:any, index:number) => {
+    const partSignedUrlList = signedUrls.map((signedUrl: any, index: number) => {
         return {
             signedUrl: signedUrl,
             PartNumber: index + 1,
