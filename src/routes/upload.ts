@@ -53,7 +53,7 @@ router.post('/get-signed-url', async (req: Request, res: Response) => {
 
     let validFileType = ValidateVideoType(fileType)
 
-    let insertQuery = 'INSERT INTO public.video (title, description, tags, user_id) VALUES ($1, $2, $3, $4) RETURNING (*)'
+    let insertQuery = 'INSERT INTO public.video (title, description, tags, user_id) VALUES ($1, $2, $3, $4) RETURNING *'
     let insertParams = [fileName, description, tags, userId]
     let newVideoDetails = await db.query(insertQuery, insertParams)
     if (newVideoDetails == undefined) {
@@ -61,7 +61,7 @@ router.post('/get-signed-url', async (req: Request, res: Response) => {
             error: "Server error"
         })
     }
-    logger.error(newVideoDetails, ": video details")
+    logger.info(newVideoDetails, ": video details")
 
     let fileId = newVideoDetails.id;
 
@@ -102,7 +102,10 @@ router.post('/get-signed-url', async (req: Request, res: Response) => {
 })
 
 router.post('/initializeMultipartUpload', async (req: Request, res: Response) => {
+    console.log("REQ:", req)
+    console.log("BODY OF req.body:", req.body)
     let path = req.body.path
+    console.log(path)
     let multipartParams = {
         Bucket: process.env.DO_BUCKET,
         Key: path,
@@ -121,46 +124,54 @@ router.post('/getMultipartPreSignedUrls', async (req: Request, res: Response) =>
         Bucket: process.env.DO_BUCKET,
         Key: fileKey,
         UploadId: fileId,
-        PartNumber: 0
+        PartNumber: 0,
+        ContentType: "video/mp4"
     }
     const promises = []
+    let signedUrls:any = [];
     for (let index = 0; index < parts; index++) {
-        promises.push(
-            multipartParams.PartNumber = index + 1,
-            await getSignedUrl(s3Client, new PutObjectCommand(multipartParams))
-        )
+        // promises.push(
+            multipartParams.PartNumber = index + 1
+        {
+            signedUrls.push(await getSignedUrl(s3Client, new PutObjectCommand(multipartParams)))
+        }
+        // )
     }
-    const signedUrls = await Promise.all(promises)
+    // const signedUrls = await Promise.all(promises)
+    console.log("Signed Urls: ")
 
     // each url is assigned a part to the index
-    const partSignedUrlList = signedUrls.map((signedUrl, index) => {
+    const partSignedUrlList = signedUrls.map((signedUrl:any, index:number) => {
         return {
             signedUrl: signedUrl,
             PartNumber: index + 1,
         }
     })
+    console.log(partSignedUrlList)
     res.status(200).json({
         parts: partSignedUrlList,
     })
 })
 
-router.get("/finalizeMultipartUpload",async (req: Request, res: Response) => {
+router.post("/finalizeMultipartUpload", async (req: Request, res: Response) => {
     const {fileId, fileKey, parts} = req.body
     const
-    multipartParams = {
-        Bucket: process.env.DO_BUCKET,
-        Key: fileKey,
-        UploadId: fileId,
-        MultipartUpload: {
+        multipartParams = {
+            Bucket: process.env.DO_BUCKET,
+            Key: fileKey,
+            UploadId: fileId,
+            ContentType: "video/mp4",
+            MultipartUpload: {
 // ordering the parts to make sure they are in the right order
-            Parts: _.orderBy(parts, ["PartNumber"], ["asc"]),
-        },
-    }
+                Parts: _.orderBy(parts, ["PartNumber"], ["asc"]),
+            },
+        }
     const completeMultipartUploadOutput = await s3Client.completeMultipartUpload(multipartParams)
+    console.log("Complete Multipart Upload Output: ", completeMultipartUploadOutput)
 // completeMultipartUploadOutput.Location represents the
 // URL to the resource just uploaded to the cloud storage
     res.status(200).json({
-        location: completeMultipartUploadOutput.Location
+        uploadcompletedata: completeMultipartUploadOutput
     })
 })
 
