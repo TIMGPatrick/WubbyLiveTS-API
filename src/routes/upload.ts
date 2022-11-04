@@ -164,7 +164,10 @@ router.post("/finalizeMultipartUpload", async (req: Request, res: Response) => {
                 Parts: _.orderBy(parts, ["PartNumber"], ["asc"]),
             },
         }
-    const completeMultipartUploadOutput = await s3Client.completeMultipartUpload(multipartParams)
+    let completeMultipartUploadOutput = await s3Client.completeMultipartUpload(multipartParams).catch((error) => {
+        console.log("multipart params:",multipartParams)
+        console.log("error finalising upload:",error)
+    })
     console.log("Complete Multipart Upload Output: ", completeMultipartUploadOutput)
 // completeMultipartUploadOutput.Location represents the
 // URL to the resource just uploaded to the cloud storage
