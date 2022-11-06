@@ -1,5 +1,6 @@
 import {Request, Response} from 'express'
 import {video} from '../interfaces/video'
+import axios from "axios"
 // Imports your configured client and any necessary S3 commands.
 import {ListBucketsCommand} from "@aws-sdk/client-s3";
 import {s3Client} from "../tools/s3Client";
@@ -79,7 +80,7 @@ router.post('/get-signed-url', async (req: Request, res: Response) => {
     let newFileType = fileType;
 
     const bucketParams = {
-        Bucket: "voddle-galaxy",
+        Bucket: process.env.DO_BUCKET,
         Key: path,
         ContentType: "video/mp4"
     };
@@ -101,7 +102,7 @@ router.post('/get-signed-url', async (req: Request, res: Response) => {
     }
 })
 
-router.post('/initializeMultipartUpload', async (req: Request, res: Response) => {
+router.post('/initialiseMultipartUpload', async (req: Request, res: Response) => {
     console.log("REQ:", req)
     console.log("BODY OF req.body:", req.body)
     let path = req.body.path
@@ -113,17 +114,17 @@ router.post('/initializeMultipartUpload', async (req: Request, res: Response) =>
     }
     const multipartUpload = await s3Client.createMultipartUpload(multipartParams)
     res.send({
-        fileId: multipartUpload.UploadId,
+        uploadId: multipartUpload.UploadId,
         fileKey: multipartUpload.Key
     })
 })
 
 router.post('/getMultipartPreSignedUrls', async (req: Request, res: Response) => {
-    const {fileKey, fileId, parts} = req.body
+    const {fileKey, uploadId, parts} = req.body
     const multipartParams = {
         Bucket: process.env.DO_BUCKET,
         Key: fileKey,
-        UploadId: fileId,
+        UploadId: uploadId,
         PartNumber: 0,
         ContentType: "video/mp4"
     }
@@ -151,29 +152,64 @@ router.post('/getMultipartPreSignedUrls', async (req: Request, res: Response) =>
     })
 })
 
-router.post("/finalizeMultipartUpload", async (req: Request, res: Response) => {
-    const {fileId, fileKey, parts} = req.body
-    const
-        multipartParams = {
+router.post("/finaliseMultipartUpload", async (req: Request, res: Response) => {
+    try {
+        const {uploadId, fileKey, parts} = req.body
+        const multipartParams = {
             Bucket: process.env.DO_BUCKET,
             Key: fileKey,
-            UploadId: fileId,
+            UploadId: uploadId,
             ContentType: "video/mp4",
             MultipartUpload: {
 // ordering the parts to make sure they are in the right order
                 Parts: _.orderBy(parts, ["PartNumber"], ["asc"]),
             },
         }
-    let completeMultipartUploadOutput = await s3Client.completeMultipartUpload(multipartParams).catch((error) => {
-        console.log("multipart params:",multipartParams)
-        console.log("error finalising upload:",error)
-    })
-    console.log("Complete Multipart Upload Output: ", completeMultipartUploadOutput)
-// completeMultipartUploadOutput.Location represents the
-// URL to the resource just uploaded to the cloud storage
-    res.status(200).json({
-        uploadcompletedata: completeMultipartUploadOutput
-    })
+
+        // let xml = createXML(uploadId, fileKey, parts)
+        // let finalisedUpload = await axios.post(`${process.env.DO_BUCKET}.${process.env.DO_ENDPOINT}/${fileKey}?uploadId=${uploadId}`, xml, {})
+        // console.log("Complete Multipart Upload Output: ", completeMultipartUploadOutput)
+        // completeMultipartUploadOutput.Location represents the
+        // URL to the resource just uploaded to the cloud storage
+        // console.log('completed multipart upload xml: ',completeMultipartUploadXML)
+        // res.status(200).json({
+        // uploadcompletedata: result,
+        // completeMultipartUploadXML
+        // })
+
+        let finalisedUpload = await s3Client.completeMultipartUpload(multipartParams)
+            .catch((error) => {
+                console.log("multipart params:", multipartParams)
+                console.log("error finalising upload:", error)
+                res.status(500).json({
+                    error: error
+                })
+            })
+        res.status(200).json({
+            finalisedUpload
+        })
+    } catch (error: any) {
+        res.status(500).json({
+            error: error
+        })
+    }
 })
+
+function createXML(uploadId: any, fileKey: any, parts: any) {
+    let partsOrdered = _.orderBy(parts, ["PartNumber"], ["asc"]);
+    let doc = document.implementation.createDocument('', '', null)
+    let completeMultipartUploadXML = doc.createElement("CompleteMultipartUpload");
+    for (let piece of partsOrdered) {
+        let PartSection = doc.createElement("Part");
+        let PartNumber = doc.createElement("PartNumber");
+        let ETag = doc.createElement("ETag");
+        PartNumber.innerHTML = piece.partNumber
+        ETag.innerHTML = piece.ETag
+        PartSection.appendChild(PartNumber)
+        PartSection.appendChild(ETag)
+        completeMultipartUploadXML.appendChild(PartSection)
+    }
+    return completeMultipartUploadXML
+}
 
 module.exports = router;
