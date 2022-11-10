@@ -159,57 +159,61 @@ router.post("/finaliseMultipartUpload", async (req: Request, res: Response) => {
             Bucket: process.env.DO_BUCKET,
             Key: fileKey,
             UploadId: uploadId,
-            ContentType: "video/mp4",
             MultipartUpload: {
-// ordering the parts to make sure they are in the right order
+                // ordering the parts to make sure they are in the right order
                 Parts: _.orderBy(parts, ["PartNumber"], ["asc"]),
             },
         }
 
-        // let xml = createXML(uploadId, fileKey, parts)
-        // let finalisedUpload = await axios.post(`${process.env.DO_BUCKET}.${process.env.DO_ENDPOINT}/${fileKey}?uploadId=${uploadId}`, xml, {})
-        // console.log("Complete Multipart Upload Output: ", completeMultipartUploadOutput)
+        console.log(multipartParams.MultipartUpload.Parts)
+        let xml = createXML(uploadId, fileKey, parts)
+        console.log("Print out xml: ", xml)
+        let finalisedUpload = await axios.post(`${process.env.DO_BUCKET_HTTPS}.${process.env.DO_MULTI_UPLOAD_ENDPOINT}/${fileKey}?uploadId=${uploadId}`, {xml, headers: {"Content-Type":"video/mp4"}}, {})
+        console.log("Complete Multipart Upload Output: ", finalisedUpload)
         // completeMultipartUploadOutput.Location represents the
         // URL to the resource just uploaded to the cloud storage
-        // console.log('completed multipart upload xml: ',completeMultipartUploadXML)
+        console.log('completed multipart upload xml: ')
+        console.log(finalisedUpload)
+        res.status(200).json({uploadResult: finalisedUpload.data.status})
+
+        // let finalisedUpload = await s3Client.completeMultipartUpload(multipartParams)
+
         // res.status(200).json({
-        // uploadcompletedata: result,
-        // completeMultipartUploadXML
+        //     finalisedUpload
         // })
 
-        let finalisedUpload = await s3Client.completeMultipartUpload(multipartParams)
-            .catch((error) => {
-                console.log("multipart params:", multipartParams)
-                console.log("error finalising upload:", error)
-                res.status(500).json({
-                    error: error
-                })
-            })
-        res.status(200).json({
-            finalisedUpload
-        })
     } catch (error: any) {
+        // console.log("multipart params:", multipartParams)
+        console.log("error finalising upload:", error)
         res.status(500).json({
-            error: error
+            error
         })
     }
 })
 
 function createXML(uploadId: any, fileKey: any, parts: any) {
     let partsOrdered = _.orderBy(parts, ["PartNumber"], ["asc"]);
-    let doc = document.implementation.createDocument('', '', null)
-    let completeMultipartUploadXML = doc.createElement("CompleteMultipartUpload");
+    // let doc = document.implementation.createDocument('', '', null)
+    // let completeMultipartUploadXML = doc.createElement("CompletedMultipartUpload");
+    // for (let piece of partsOrdered) {
+    //     let PartSection = doc.createElement("Part");
+    //     let PartNumber = doc.createElement("PartNumber");
+    //     let ETag = doc.createElement("ETag");
+    //     PartNumber.innerHTML = piece.partNumber
+    //     ETag.innerHTML = piece.ETag
+    //     PartSection.appendChild(PartNumber)
+    //     PartSection.appendChild(ETag)
+    //     completeMultipartUploadXML.appendChild(PartSection)
+    // }
+    let completeMultipartUploadXML = "<CompleteMultipartUpload>";
     for (let piece of partsOrdered) {
-        let PartSection = doc.createElement("Part");
-        let PartNumber = doc.createElement("PartNumber");
-        let ETag = doc.createElement("ETag");
-        PartNumber.innerHTML = piece.partNumber
-        ETag.innerHTML = piece.ETag
-        PartSection.appendChild(PartNumber)
-        PartSection.appendChild(ETag)
-        completeMultipartUploadXML.appendChild(PartSection)
+        completeMultipartUploadXML += "<Part>";
+        completeMultipartUploadXML += `<PartNumber>${piece.PartNumber}</PartNumber>`;
+        completeMultipartUploadXML += `<ETag>${piece.ETag}</ETag>`;
+        completeMultipartUploadXML += "</Part>";
     }
-    return completeMultipartUploadXML
+    completeMultipartUploadXML += "</CompleteMultipartUpload>";
+    return completeMultipartUploadXML;
 }
 
 module.exports = router;

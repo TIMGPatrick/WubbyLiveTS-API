@@ -1,0 +1,10 @@
+<LifecycleConfiguration>
+<Rule>
+    <ID>Remove uncompleted uploads</ID>
+    <Status>Enabled</Status>
+    <Prefix/>
+    <AbortIncompleteMultipartUpload>
+        <DaysAfterInitiation>1</DaysAfterInitiation>
+    </AbortIncompleteMultipartUpload>
+</Rule>
+</LifecycleConfiguration>
