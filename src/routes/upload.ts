@@ -126,7 +126,7 @@ router.post('/getMultipartPreSignedUrls', async (req: Request, res: Response) =>
         Key: fileKey,
         UploadId: uploadId,
         PartNumber: 0,
-        ContentType: "video/mp4"
+        ContentType: "video/mp4",
     }
     const promises = []
     let signedUrls: any = [];
@@ -147,7 +147,8 @@ router.post('/getMultipartPreSignedUrls', async (req: Request, res: Response) =>
         }
     })
     console.log(partSignedUrlList)
-    res.status(200).json({
+    res.status(200).json(
+        {
         parts: partSignedUrlList,
     })
 })
@@ -168,19 +169,14 @@ router.post("/finaliseMultipartUpload", async (req: Request, res: Response) => {
         console.log(multipartParams.MultipartUpload.Parts)
         let xml = createXML(uploadId, fileKey, parts)
         console.log("Print out xml: ", xml)
-        let finalisedUpload = await axios.post(`${process.env.DO_BUCKET_HTTPS}.${process.env.DO_MULTI_UPLOAD_ENDPOINT}/${fileKey}?uploadId=${uploadId}`, {xml, headers: {"Content-Type":"video/mp4"}}, {})
+        let finalisedUpload = await axios.post(`${process.env.DO_BUCKET_HTTPS}.${process.env.DO_MULTI_UPLOAD_ENDPOINT}/${fileKey}?uploadId=${uploadId}`, {
+            xml,
+            headers: {"Content-Type": "video/mp4"}
+        }, {})
         console.log("Complete Multipart Upload Output: ", finalisedUpload)
-        // completeMultipartUploadOutput.Location represents the
-        // URL to the resource just uploaded to the cloud storage
         console.log('completed multipart upload xml: ')
         console.log(finalisedUpload)
-        res.status(200).json({uploadResult: finalisedUpload.data.status})
-
-        // let finalisedUpload = await s3Client.completeMultipartUpload(multipartParams)
-
-        // res.status(200).json({
-        //     finalisedUpload
-        // })
+        res.status(200).json({uploadResult: finalisedUpload.data})
 
     } catch (error: any) {
         // console.log("multipart params:", multipartParams)
@@ -193,18 +189,6 @@ router.post("/finaliseMultipartUpload", async (req: Request, res: Response) => {
 
 function createXML(uploadId: any, fileKey: any, parts: any) {
     let partsOrdered = _.orderBy(parts, ["PartNumber"], ["asc"]);
-    // let doc = document.implementation.createDocument('', '', null)
-    // let completeMultipartUploadXML = doc.createElement("CompletedMultipartUpload");
-    // for (let piece of partsOrdered) {
-    //     let PartSection = doc.createElement("Part");
-    //     let PartNumber = doc.createElement("PartNumber");
-    //     let ETag = doc.createElement("ETag");
-    //     PartNumber.innerHTML = piece.partNumber
-    //     ETag.innerHTML = piece.ETag
-    //     PartSection.appendChild(PartNumber)
-    //     PartSection.appendChild(ETag)
-    //     completeMultipartUploadXML.appendChild(PartSection)
-    // }
     let completeMultipartUploadXML = "<CompleteMultipartUpload>";
     for (let piece of partsOrdered) {
         completeMultipartUploadXML += "<Part>";
